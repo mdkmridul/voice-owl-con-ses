@@ -9,24 +9,18 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['log', 'warn', 'error'],
   });
+
+  //Global Validation Pipeline with transformation enabled
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
+
+  // Security middleware
   app.use(helmet());
 
   const configService = app.get(ConfigService);
   const port = Number(configService.get<string>('PORT')) || 3000;
   const logger = new Logger('Bootstrap');
 
-  const mongoUrl = configService.get<string>('DATABASE_URL') ?? '';
-  let mongoTarget = 'unknown';
-  try {
-    const parsed = new URL(mongoUrl);
-    mongoTarget = `${parsed.protocol}//${parsed.hostname}${
-      parsed.port ? ':' + parsed.port : ''
-    }${parsed.pathname}`;
-  } catch {
-    mongoTarget = '[unparseable mongo url]';
-  }
-
+  // Minimal Swagger Setup
   const config = new DocumentBuilder()
     .setTitle('Voice Owl Conversation Service')
     .setDescription('API documentation for sessions and events')
@@ -37,6 +31,18 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
+  // For logging the mongo URL in a more readable format, 
+  // we can parse it and log the components without credentials
+  const mongoUrl = configService.get<string>('DATABASE_URL') ?? '';
+  let mongoTarget = 'unknown';
+  try {
+    const parsed = new URL(mongoUrl);
+    mongoTarget = `${parsed.protocol}//${parsed.hostname}${
+      parsed.port ? ':' + parsed.port : ''
+    }${parsed.pathname}`;
+  } catch {
+    mongoTarget = '[unparseable mongo url]';
+  }
   logger.log(`Connecting to Mongo at ${mongoTarget}`);
   await app
     .listen(port)
