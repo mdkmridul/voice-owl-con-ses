@@ -74,7 +74,6 @@ export class EventsService {
 
     try {
       let { limit, page, sortBy } = payload;
-      console.log(typeof page, typeof limit);
 
       const { sortOrder, retrieveAll } = payload;
 
